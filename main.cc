@@ -181,12 +181,10 @@ kernel void reduce(global float* a,
     const int l = get_num_groups(0);
     const int i = get_global_id(0);
 
-    // move parts of array into local
     local float buff[BUFFSIZE];
     buff[t] = a[k * m + t];
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    // compute in local
     for (int offset = m / 2; offset > 0; offset /= 2) {
         if (t < offset) {
             buff[t] += buff[t + offset];
@@ -198,7 +196,6 @@ kernel void reduce(global float* a,
     }
     const int n = get_global_size(0);
 
-    // only use single work item
     if (i == 0 && n / m <= m) {
         float sum = 0;
         for (int j = 0; j < l; j++)
@@ -212,13 +209,11 @@ kernel void scan_inclusive(global float* a, int step) {
     const int t = get_local_id(0);
     const int m = get_local_size(0);
 
-    // move parts of array into local
     local float buff[BUFFSIZE];
     buff[t] = a[(step - 1) + i * step];
     barrier(CLK_LOCAL_MEM_FENCE);
 
     float sum = buff[t];
-    // compute in local
     for (int offset = 1; offset < m; offset *= 2) {
         if (t >= offset) {
             sum += buff[t - offset];
